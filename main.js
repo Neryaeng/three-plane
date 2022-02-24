@@ -32,12 +32,15 @@ var heatFragment = `
   vec3 heatmapGradient(float t) {
     vec3 c = 1.0 - pow(abs(vec3(t) - vec3(0.65, 0.5, 0.2)) * vec3(3.0, 3.0, 5.0), vec3(1.5, 1.3, 1.7));
   //  c.r = max((0.15 - square(abs(t - 0.04) * 5.0)), c.r);
-   c.r = (t > 0.5) ? smoothstep(0.32, 4.35, t  + 0.4) : c.r;
+  //    c.r = (t < 0.5) ? smoothstep(0.04, 0.45, t) : c.g;
+
      c.g = (t < 0.5) ? smoothstep(0.04, 0.45, t) : c.g;
     return clamp(c, 0.0, 1.0);
       }
-      
-void main() {
+  
+ 
+
+  void main() {
     float v = abs(hValue - 1.);
     gl_FragColor = vec4(heatmapGradient(hValue), 1. - v * v) ;
   }
@@ -53,15 +56,15 @@ camera.position.set(0, -70, 0);
 
 var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+ document.body.appendChild(renderer.domElement);
 
 //var controls = new THREE.OrbitControls(camera, renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 //scene.add(new THREE.GridHelper(100, 200, 0x014000, 0x000040)); //(percent, number of squers in a row)
-var planeGeometry = new THREE.PlaneGeometry(200, 200, 19, 19);
-var geom = new THREE.BoxBufferGeometry();
+var planeGeometry = new THREE.PlaneGeometry(200, 200, 199, 199);
+ var geom = new THREE.BoxBufferGeometry();
 
-var material = new THREE.ShaderMaterial({
+ var material = new THREE.ShaderMaterial({
   uniforms: {
     thickness: {
       value: 0.0,
@@ -70,25 +73,27 @@ var material = new THREE.ShaderMaterial({
       value: new THREE.Color(),
     },
   },
-
-  extensions: { derivatives: true },
+   
+   extensions: { derivatives: true },
 });
-var changable = THREE.Math.randInt(1, 23);
+var changable = THREE.Math.randInt(1,23);
 
 function createGrid() {
+
   for (let i = 0.5; i <= 7.5; i++) {
-    for (let j = 0.5; j <= 14.5; j++) {
-      let box = new THREE.Mesh(geom, material);
-      box.material.uniforms.color.value.set(0xffff00);
-      // let rand = floatArray[THREE.Math.randInt(0, 7)];
-      //     box.material.uniforms.color.value.set(rand* 0xffffff);
+   for (let j = 0.5; j <= 14.5; j++) {
+     let box = new THREE.Mesh(geom, material);
+   box.material.uniforms.color.value.set( 0xffff00);
+    // let rand = floatArray[THREE.Math.randInt(0, 7)];
+  //     box.material.uniforms.color.value.set(rand* 0xffffff);
       // console.log("rand", n);
-      box.scale.y = THREE.Math.randInt(1, 1);
-      box.position.set(i + changable, 0, j + changable);
-      scene.add(box);
-    }
-  }
-}
+     box.scale.y = THREE.Math.randInt(1,1);
+     box.position.set(i+changable, 0, j+changable);
+     scene.add(box);
+   }
+ }
+} 
+
 
 planeGeometry.rotateX(-Math.PI * 1.5);
 //var heightMap = createHeightMap();
@@ -100,47 +105,49 @@ function createHeightMap() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, 200, 200);
   for (let i = 0.0; i <= 200.0; i++) {
-    for (let j = 0.0; j <= 200.0; j++) {
-      var x = i;
-      var y = j;
-      var radius = 1.000001;
-      var grd = ctx.createRadialGradient(x, y, 1, x, y, radius);
-      var h8 = Math.floor(Math.random() * 855);
-      //   console.log(i,"rgb("+ h8 + "," + h8 + "," + h8 +")");
-      grd.addColorStop(0, "rgb(149,349,349)");
-      grd.addColorStop(1, "transparent");
-      ctx.fillStyle = grd;
-      ctx.fillRect(0, 0, 200, 200); //plane position
-      // console.log("ctx ",ctx);
-    }
+    for (let j =0.0; j <= 200.0; j++) {
+    var x = i;
+    var y = j;
+    var radius = 1.000001;
+    var grd = ctx.createRadialGradient(x, y, 1, x, y, radius);
+    var h8 = Math.floor(Math.random() * 855);
+    //   console.log(i,"rgb("+ h8 + "," + h8 + "," + h8 +")");
+    grd.addColorStop(0, "rgb(" + h8 + "," + h8 + "," + h8 + ")");
+    grd.addColorStop(1, "transparent");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, 200, 200); //plane position
+    // console.log("ctx ",ctx);
   }
-  //console.log("ctx ",ctx);
+}
+//console.log("ctx ",ctx);
   return new THREE.CanvasTexture(canvas);
 }
-function createMap() {
+function createMap(){
   var heightMap = createHeightMap();
-
+ 
   //console.log(planeGeometry.parameters);
   var heat = new THREE.Mesh(
     planeGeometry,
     new THREE.ShaderMaterial({
       color: "blue",
-
+    
       uniforms: {
         heightMap: { value: heightMap },
-        heightRatio: { value: THREE.Math.randInt(0, 0) },
+        heightRatio: { value: THREE.Math.randInt(0,0)},
+    
       },
       vertexShader: heatVertex,
       fragmentShader: heatFragment,
-      transparent: true,
-      wireframe: true,
+      transparent: false,
+      wireframe: false,
     })
   );
   //console.log(heat);
-
+  
   scene.add(heat);
   createGrid();
 }
+
 
 //var gui = new dat.GUI();
 //gui.add(heat.material.uniforms.heightRatio, "value", 0, 15).name("heightRatio");
@@ -157,7 +164,7 @@ function render() {
   requestAnimationFrame(render);
   renderer.render(scene, camera);
 }
-
+ 
 var state = {
   clock: new THREE.Clock(),
   frame: 0,
@@ -168,20 +175,21 @@ var state = {
 
 state.clock.start();
 loop();
-function loop() {
-  // USING THE GET DELTA METHOD
-  var secs = state.clock.getDelta();
-  scene.clear();
-  requestAnimationFrame(loop);
+function loop () {
+// USING THE GET DELTA METHOD
+var secs = state.clock.getDelta();
+scene.clear();
+requestAnimationFrame(loop);
 
-  // while(scene.children.length > 0){
-  //   scene.remove(scene.children[0]);
-  //}
-  // createGrid();
-  createMap();
-  //console.log(' Two frame rendering interval ',secs*1000+' millisecond ');
-  //console.log(' View rendering rate per second ',1/secs);
-  renderer.render(scene, camera);
-}
+// while(scene.children.length > 0){ 
+//   scene.remove(scene.children[0]); 
+//}
+// createGrid();
+createMap(); 
+//console.log(' Two frame rendering interval ',secs*1000+' millisecond ');
+//console.log(' View rendering rate per second ',1/secs);
+renderer.render(scene, camera);
+};
+
 
 //https://jsfiddle.net/prisoner849/81rqxd20/
